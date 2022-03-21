@@ -3786,6 +3786,50 @@ class QLinearConv(OnnxOpConverter):
             out = _qnn.op.quantize(out, y_scale, y_zero_point, axis=1, out_dtype=out_dtype)
         return out
 
+class QAttention(OnnxOpConverter):
+    """Operator converter for QAttention from Microsoft onnxruntime contrib opset."""
+
+    @classmethod
+    def _impl_v10(cls, inputs, attr, params):
+        # Input shapes:
+        #   Input  0 - x                 : (batch_size, sequence_length, input_hidden_size)
+        #   Input  1 - weights           : (input_hidden_size, 3 * hidden_size)
+        #   Input  2 - bias              : (3 * hidden_size)
+        #   Input  3 - input_scale       : scalar
+        #   Input  4 - weight_scale      : scalar for per tensor quantization, (3 * hidden_size) for per column quantization
+        #   Input  5 - mask_index        : nullptr, (batch_size), (2 * batch_size), (batch_size, 1), (1, 1) or (batch_size, past_sequence_length + sequence_length)
+        #   Input  6 - input_zero_point  : scalar
+        #   Input  7 - weight_zero_point : scalar for per tensor quantization, (3 * hidden_size) for per column quantization
+        #   Input  8 - past              : (2, batch_size, num_heads, past_sequence_length, head_size)
+        x = inputs[0]
+        weights = inputs[1]
+        bias = inputs[2]
+        input_scale_tensor = inputs[3]
+        weight_scale_tensor = inputs[4]
+        mask_index = inputs[5]
+        i_zp_tensor = inputs[6]
+        w_zp_tensor = inputs[7]
+        past_tensor = inputs[8]
+        # Attr :
+        num_heads = int(attr["num_heads"])
+        unidirectional = int(attr.get("unidirectional","0")
+
+        # TODO: Check inputs
+
+        # TODO: Dequant
+
+        # TODO: Get batch size, seq size ...
+
+        # TODO: GEMM : X * QKV +bias
+
+        # TODO: Get Present + Past
+
+        # TODO: Q * K , consider mask and unidirectional, then softmax 
+
+        # TODO: prob * V 
+
+        pass 
+
 
 class QLinearAdd(OnnxOpConverter):
     """Operator converter for QLinearAdd from Microsoft onnxruntime contrib opset."""
