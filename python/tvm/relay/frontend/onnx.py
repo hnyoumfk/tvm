@@ -3792,8 +3792,8 @@ class QAttention(OnnxOpConverter):
     @classmethod
     def _impl_v10(cls, inputs, attr, params):
         # Input shapes:
-        #   Input  0 - x                 : (batch_size, sequence_length, input_hidden_size)
-        #   Input  1 - weights           : (input_hidden_size, 3 * hidden_size)
+        #   Input  0 - x                 : (batch_size, sequence_length, x_hidden_size)
+        #   Input  1 - weights           : (x_hidden_size, 3 * hidden_size)
         #   Input  2 - bias              : (3 * hidden_size)
         #   Input  3 - input_scale       : scalar
         #   Input  4 - weight_scale      : scalar for per tensor quantization, (3 * hidden_size) for per column quantization
@@ -3802,12 +3802,12 @@ class QAttention(OnnxOpConverter):
         #   Input  7 - weight_zero_point : scalar for per tensor quantization, (3 * hidden_size) for per column quantization
         #   Input  8 - past              : (2, batch_size, num_heads, past_sequence_length, head_size)
         x = inputs[0]
-        weights = inputs[1]
+        w = inputs[1]
         bias = inputs[2]
-        input_scale_tensor = inputs[3]
-        weight_scale_tensor = inputs[4]
+        x_scale_tensor = inputs[3]
+        w_scale_tensor = inputs[4]
         mask_index = inputs[5]
-        i_zp_tensor = inputs[6]
+        x_zp_tensor = inputs[6]
         w_zp_tensor = inputs[7]
         past_tensor = inputs[8]
         # Attr :
@@ -3816,9 +3816,23 @@ class QAttention(OnnxOpConverter):
 
         # TODO: Check inputs
 
-        # TODO: Dequant
+        x_scale = get_scalar(x_scale_tensor)
+        w_scale = get_scalar_or_1d_tensor(w_scale_tensor)
+        d_scale = x_scale * w_scale # TODO: change to op
 
-        # TODO: Get batch size, seq size ...
+        x_zp = get_scalar(x_zp_tensor, "uint8")  # TODO: unint8 ??
+        w_zp = get_scalar_or_1d_tensor(w_zp_tensor, "unint8")
+
+        batch_size, seq_len, x_hidden_size  = infer_shape(x)
+        x_hidden_size , hidden_size_x3 = infer_shape(w)
+        hidden_size = hidden_size_x3 / 3
+        head_size = hidden_size / num_heads
+
+        #TODO: output_shape = (batch_size, seq_len, hidden_size)
+
+        # TODO: 220 for ORT
+
+        # TODO: Dequant
 
         # TODO: GEMM : X * QKV +bias
 
